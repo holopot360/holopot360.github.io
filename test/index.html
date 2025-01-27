@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>WebGL + Fast Camera Brightness Detection</title>
+  <title>High-FPS WebGL + Throttled Camera Check</title>
   <style>
     html, body {
       margin: 0; padding: 0; height: 100%; background: black; overflow: hidden;
@@ -13,7 +13,7 @@
       left: 50%;
       transform: translateX(-50%);
     }
-    /* Hidden video & canvas for brightness detection */
+    /* Hidden elements for camera-based brightness detection */
     #video, #camCanvas { display: none; }
   </style>
 </head>
@@ -22,40 +22,36 @@
 <!-- WebGL Canvas -->
 <canvas id="glCanvas"></canvas>
 
-<!-- Hidden camera elements (just used for brightness detection) -->
+<!-- Hidden camera elements for brightness detection -->
 <video id="video" playsinline></video>
 <canvas id="camCanvas" width="32" height="32"></canvas>
 
 <script>
 (function() {
   // ---------------------------------------------------------
-  // 1) Parse URL params: mode, frequency, rps, numViews
+  // 1) Parse URL params
   // ---------------------------------------------------------
   const params = new URLSearchParams(window.location.search);
-  const mode      = params.get('mode') || 'test'; // "test", "viking4", "viking32", "statue32"
+  const mode      = params.get('mode') || 'test'; 
   const freq      = parseFloat(params.get('frequency') || '120');
   const rps       = parseFloat(params.get('rps') || '3.75');
   const numViews  = parseFloat(params.get('numViews') || '32');
-  const skipSprite = 32 / numViews;
+  const skipSprite= 32 / numViews;
 
-  // framesToSwitch => how many frames pass before toggling/moving
+  // framesToSwitch => how many frames pass before toggling
   let framesToSwitch;
   if (mode === 'test') {
-    // same as before
-    framesToSwitch = (freq / rps) * 0.5; 
+    framesToSwitch = (freq / rps) * 0.5;
   } else if (mode === 'viking32' || mode === 'statue32') {
-    // use the new formula: (freq / rps) * (1 / numViews)
     framesToSwitch = (freq / rps) * (1 / numViews);
   } else {
-    // default for other texture modes (e.g. "viking4")
     framesToSwitch = (freq / rps) * 0.25;
   }
-
   framesToSwitch = Math.round(framesToSwitch);
   if (framesToSwitch < 1) framesToSwitch = 1;
 
   // ---------------------------------------------------------
-  // 2) Canvas and WebGL setup
+  // 2) WebGL Setup
   // ---------------------------------------------------------
   const canvas = document.getElementById('glCanvas');
   const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
@@ -78,7 +74,7 @@
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
 
-  // Toggle fullscreen on click
+  // Toggle fullscreen on canvas click
   canvas.addEventListener('click', () => {
     if (!document.fullscreenElement) {
       canvas.requestFullscreen();
@@ -115,10 +111,8 @@
     uniform sampler2D uSampler;
 
     void main(void) {
-      // If vColorMode > 0.5 => "test" mode => solid color
-      // else => "texture" mode => sample from sprite
       if (vColorMode > 0.5) {
-        gl_FragColor = uSolidColor;
+        gl_FragColor = uSolidColor;  // test mode => solid color
       } else {
         gl_FragColor = texture2D(uSampler, vTexCoord);
       }
@@ -130,7 +124,7 @@
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      console.error('Error compiling shader:', gl.getShaderInfoLog(shader));
+      console.error('Shader compile error:', gl.getShaderInfoLog(shader));
       gl.deleteShader(shader);
       return null;
     }
@@ -144,15 +138,13 @@
   gl.attachShader(shaderProgram, vertexShader);
   gl.attachShader(shaderProgram, fragmentShader);
   gl.linkProgram(shaderProgram);
-
   if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-    console.error('Could not link shader program:', gl.getProgramInfoLog(shaderProgram));
+    console.error('Program link error:', gl.getProgramInfoLog(shaderProgram));
     return;
   }
-
   gl.useProgram(shaderProgram);
 
-  // Location lookups
+  // Attribute/uniform locations
   const aPosition   = gl.getAttribLocation(shaderProgram, 'aPosition');
   const aTexCoord   = gl.getAttribLocation(shaderProgram, 'aTexCoord');
   const aColorMode  = gl.getAttribLocation(shaderProgram, 'aColorMode');
@@ -160,7 +152,7 @@
   const uSampler    = gl.getUniformLocation(shaderProgram, 'uSampler');
 
   // ---------------------------------------------------------
-  // 4) Buffers: [pos.x, pos.y, tex.x, tex.y, colorMode]
+  // 4) Buffers
   // ---------------------------------------------------------
   const buffer = gl.createBuffer();
 
@@ -168,9 +160,9 @@
     const data = [];
     for (let i = 0; i < posArray.length; i += 2) {
       data.push(
-        posArray[i], posArray[i + 1],    // position
-        texArray[i], texArray[i + 1],    // texCoord
-        colModeArray[i / 2]             // colorMode
+        posArray[i],   posArray[i+1],   // position
+        texArray[i],   texArray[i+1],   // texCoord
+        colModeArray[i/2]              // colorMode
       );
     }
     return new Float32Array(data);
@@ -181,33 +173,29 @@
   let colorModeArr = null;
 
   function setupQuad(aspect) {
-    // Fit the sub-frame fully in [-1..+1].
-    // If aspect >= 1 => wide => width=2, height=2/aspect
-    // If aspect < 1  => tall => height=2, width=2*aspect
-    let halfWidth, halfHeight;
+    // Fit sub-frame in [-1..+1]
+    let halfW, halfH;
     if (aspect >= 1.0) {
-      halfWidth  = 1.0;
-      halfHeight = 1.0 / aspect;
+      halfW = 1.0;
+      halfH = 1.0 / aspect;
     } else {
-      halfHeight = 1.0;
-      halfWidth  = aspect;
+      halfH = 1.0;
+      halfW = aspect;
     }
 
     positions = new Float32Array([
-      -halfWidth, -halfHeight,
-       halfWidth, -halfHeight,
-      -halfWidth,  halfHeight,
-       halfWidth,  halfHeight
+      -halfW, -halfH,
+       halfW, -halfH,
+      -halfW,  halfH,
+       halfW,  halfH
     ]);
 
     if (mode === 'test') {
-      // colorMode=1 => solid color
       texcoords = new Float32Array([0,0, 1,0, 0,1, 1,1]);
-      colorModeArr = [1, 1, 1, 1];
+      colorModeArr = [1,1,1,1];
     } else {
-      // colorMode=0 => texture
       texcoords = new Float32Array([0,0, 1,0, 0,1, 1,1]);
-      colorModeArr = [0, 0, 0, 0];
+      colorModeArr = [0,0,0,0];
     }
 
     const data = createBufferData(positions, texcoords, colorModeArr);
@@ -216,20 +204,19 @@
   }
 
   // ---------------------------------------------------------
-  // 5) Texture loading
+  // 5) Texture Loading
   // ---------------------------------------------------------
-  let texture    = null;
-  let frameCount = 0;
-  let subImageIdx= 0;
-
-  const colorCyan = [0, 1, 1, 1];
-  const colorRed  = [1, 0, 0, 1];
-  let currentColor= colorCyan;
+  let texture       = null;
+  let frameCount    = 0;
+  let subImageIdx   = 0;
+  const colorCyan   = [0,1,1,1];
+  const colorRed    = [1,0,0,1];
+  let currentColor  = colorCyan;
 
   const textureImages = {
-    viking4:  'viking.png',      // 4 frames horizontally
-    viking32: 'viking32.png',    // 32 frames => 8×4
-    statue32: 'statue32.png'     // 32 frames => 8×4
+    viking4:  'viking.png',
+    viking32: 'viking32.png',
+    statue32: 'statue32.png'
   };
 
   if (mode in textureImages) {
@@ -248,27 +235,28 @@
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
       let columns = 1, rows = 1;
-      if (mode === 'viking4') { columns=4; rows=1; }
-      else if (mode === 'viking32' || mode === 'statue32') {
-        columns=8; rows=4;
+      if (mode === 'viking4') {
+        columns = 4; rows = 1;
+      } else if (mode === 'viking32' || mode === 'statue32') {
+        columns = 8; rows = 4;
       }
 
-      // sub-frame aspect
+      // For a perfect sub-frame aspect:
       const subAspect = (image.width / columns) / (image.height / rows);
-      setupQuad(1.0); // or subAspect if you want to preserve each frame's aspect
+      setupQuad(1.0); 
       requestAnimationFrame(() => render(columns, rows));
     };
   } else {
-    // mode="test"
+    // test mode
     setupQuad(1.0);
     requestAnimationFrame(() => render(1,1));
   }
 
   // ---------------------------------------------------------
-  // 6) Render loop
+  // 6) Main Render Loop at up to 120Hz
   // ---------------------------------------------------------
   function render(columns, rows) {
-    gl.clearColor(0, 0, 0, 1);
+    gl.clearColor(0,0,0,1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     if (mode === 'test') {
@@ -281,13 +269,12 @@
       // multi-frame textures
       const totalFrames = columns * rows;
 
-      // Switch frame
       if (frameCount % framesToSwitch === 0) {
         if (mode === 'viking32' || mode === 'statue32') {
-          // Example: reverse
+          // reverse step
           subImageIdx = (subImageIdx - skipSprite + totalFrames) % totalFrames;
         } else {
-          // forward
+          // forward step
           subImageIdx = (subImageIdx + skipSprite) % totalFrames;
         }
       }
@@ -296,23 +283,22 @@
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.uniform1i(uSampler, 0);
 
-      // Figure out col/row
+      // figure out col, row
       const col = subImageIdx % columns;
       const row = Math.floor(subImageIdx / columns);
       const invertedRow = (rows - 1) - row;
 
-      // UV coords
-      const uLeft   = col * (1 / columns);
-      const uRight  = uLeft + (1 / columns);
-      const vTop    = invertedRow * (1 / rows);
-      const vBottom = vTop + (1 / rows);
+      const uLeft   = col * (1/columns);
+      const uRight  = uLeft + (1/columns);
+      const vTop    = invertedRow * (1/rows);
+      const vBottom = vTop + (1/rows);
 
-      // Rebuild buffer data
+      // update buffer data
       const data = [];
       for (let i = 0; i < 4; i++) {
         const px = positions[i*2], py = positions[i*2 + 1];
-        const oldU = (i % 2 === 1) ? 1.0 : 0.0;
-        const oldV = (i >= 2)      ? 1.0 : 0.0;
+        const oldU = (i % 2 === 1) ? 1 : 0;
+        const oldV = (i >= 2)      ? 1 : 0;
         const newU = (oldU > 0.5) ? uRight : uLeft;
         const newV = (oldV > 0.5) ? vBottom: vTop;
         data.push(px, py, newU, newV, 0);
@@ -324,9 +310,9 @@
     // Use program
     gl.useProgram(shaderProgram);
 
-    // Attributes
+    // Setup attribute pointers
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    const stride = 5 * 4; // 5 floats (x,y,u,v,colorMode)
+    const stride = 5 * 4; 
     gl.enableVertexAttribArray(aPosition);
     gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, stride, 0);
 
@@ -336,37 +322,37 @@
     gl.enableVertexAttribArray(aColorMode);
     gl.vertexAttribPointer(aColorMode, 1, gl.FLOAT, false, stride, 4*4);
 
+    // Draw
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
     frameCount++;
-    requestAnimationFrame(() => render(columns, rows));
+    requestAnimationFrame(() => render(columns, rows));  // up to device’s max refresh
   }
 
-  /* ========================================================
-   *  CAMERA BRIGHTNESS DETECTION SECTION
-   *  ========================================================
-   *  1) Ask for camera with environment facing mode and try
-   *     to get high frameRate. Not guaranteed on all devices.
-   *  2) Draw to 32×32 hidden canvas each frame.
-   *  3) Compute average brightness. If above threshold, reset
-   *     subImageIdx=0 to sync frames on bright flash.
-   */
-
+  /* =====================================================
+   * CAMERA BRIGHTNESS DETECTION (Throttled)
+   * ===================================================== */
   async function startCamera() {
     try {
       const constraints = {
         audio: false,
         video: {
-          facingMode: 'environment', 
+          facingMode: 'environment',
           frameRate: { ideal: 60, max: 60 }, // not guaranteed
           width: { ideal: 640 },
-          height:{ ideal: 480 },
+          height:{ ideal: 480 }
         }
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       const videoEl = document.getElementById('video');
       videoEl.srcObject = stream;
       await videoEl.play();
-      requestAnimationFrame(checkBrightness);
+
+      // Instead of doing camera checks every animation frame,
+      // we do them ~60 times/second to reduce overhead.
+      // If we want to push it more, we can reduce the interval.
+      const intervalMs = 16; // ~60 checks/s
+      setInterval(checkBrightness, intervalMs);
     } catch (err) {
       console.error('Camera error:', err);
     }
@@ -377,33 +363,36 @@
     const camCanvas = document.getElementById('camCanvas');
     const ctx = camCanvas.getContext('2d');
 
-    // Draw video frame to small canvas
+    // Draw video frame to small 32x32 canvas
     ctx.drawImage(videoEl, 0, 0, camCanvas.width, camCanvas.height);
 
-    // Get pixel data and compute average
+    // Get pixel data
     const frameData = ctx.getImageData(0, 0, camCanvas.width, camCanvas.height);
     const data = frameData.data;
-    let sum = 0;
-    for (let i = 0; i < data.length; i += 4) {
-      sum += (data[i] + data[i+1] + data[i+2]) / 3;
-    }
-    const numPixels = data.length / 4;
-    const brightness = sum / numPixels;
 
-    // Threshold for "flash"
-    const threshold = 200;
+    // Skip most pixels to reduce overhead further
+    // e.g. read every 16th pixel => 1/4 of them if you want even faster
+    let sum = 0;
+    let count = 0;
+    for (let i = 0; i < data.length; i += 16) {
+      // data[i], data[i+1], data[i+2] => R, G, B
+      const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+      sum += avg;
+      count++;
+    }
+    const brightness = sum / count;
+
+    // If brightness is above some threshold => reset
+    const threshold = 200;  // Adjust as needed
     if (brightness > threshold) {
-      // Reset subImageIdx
       subImageIdx = 0;
     }
-
-    requestAnimationFrame(checkBrightness);
   }
 
-  // Start camera once page is loaded
+  // Start camera once the page loads
   window.addEventListener('load', startCamera);
-
 })();
 </script>
+
 </body>
 </html>
