@@ -57,9 +57,9 @@
     const w = h / 2;
     canvas.style.height = h + 'px';
     canvas.style.width  = w + 'px';
-    canvas.width  = w;
-    canvas.height = h;
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+    canvas.width  = w/10;
+    canvas.height = h/10;
+    gl.viewport(0, 0, canvas.width, canvas.height);
   }
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
