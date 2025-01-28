@@ -1,62 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Canvas Half-Width, Full-Height + No-Cropping</title>
+  <meta charset="UTF-8">
+  <title>WebGL + Camera Middle Square Brightness</title>
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      background: black;
-      overflow: hidden;
-    }
+    html, body { margin: 0; padding: 0; height: 100%; background: black; overflow: hidden; }
     #glCanvas {
       display: block;
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
     }
+    /* Hide the camera feed + small canvas; we only read it for brightness. */
+    #video, #camCanvas { display: none; }
   </style>
 </head>
 <body>
 
-  <!-- 1) ADDED: A hidden <video> to grab camera frames. -->
-<video id="video" playsinline style="display:none;"></video>
+<!-- WebGL Canvas -->
 <canvas id="glCanvas"></canvas>
+
+<!-- Hidden camera elements -->
+<video id="video" playsinline></video>
+<canvas id="camCanvas" width="16" height="16"></canvas>
 
 <script>
 (function() {
-  // ---------------------------------------------------------
-  // 1) Parse URL params: mode, frequency, rps
-  // ---------------------------------------------------------
+  // =============== WebGL Setup (similar to your original code) ===============
   const params = new URLSearchParams(window.location.search);
-  const mode = params.get('mode') || 'test'; // e.g. "test", "viking4", "viking32", "statue32"
+  const mode = params.get('mode') || 'test'; 
   const freq = parseFloat(params.get('frequency') || '120');
   const rps  = parseFloat(params.get('rps') || '3.75');
   const numViews  = parseFloat(params.get('numViews') || '32');
   const skipSprite = 32 / numViews;
 
-// framesToSwitch => how many frames pass before toggling/moving
-let framesToSwitch;
+  let framesToSwitch;
+  if (mode === 'test') {
+    framesToSwitch = (freq / rps) * 0.5; 
+  } else if (mode === 'viking32' || mode === 'statue32') {
+    framesToSwitch = (freq / rps) * (1 / numViews);
+  } else {
+    framesToSwitch = (freq / rps) * 0.25;
+  }
+  framesToSwitch = Math.round(framesToSwitch);
+  if (framesToSwitch < 1) framesToSwitch = 1;
 
-if (mode === 'test') {
-  // same as before
-  framesToSwitch = (freq / rps) * 0.5; 
-} else if (mode === 'viking32' || mode === 'statue32') {
-  // use the new formula: (freq / rps) * (1 / numViews)
-  framesToSwitch = (freq / rps) * (1 / numViews);
-} else {
-  // default for other texture modes (e.g. "viking4")
-  framesToSwitch = (freq / rps) * 0.25;
-}
-
-framesToSwitch = Math.round(framesToSwitch);
-if (framesToSwitch < 1) framesToSwitch = 1;
-
-  // ---------------------------------------------------------
-  // 2) Canvas and WebGL setup
-  // ---------------------------------------------------------
   const canvas = document.getElementById('glCanvas');
   const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
   if (!gl) {
@@ -66,11 +54,9 @@ if (framesToSwitch < 1) framesToSwitch = 1;
 
   function resizeCanvas() {
     const h = window.innerHeight;
-    const w = h / 2; // half the height => tall vertical layout
-
+    const w = h / 2;
     canvas.style.height = h + 'px';
     canvas.style.width  = w + 'px';
-
     canvas.width  = w;
     canvas.height = h;
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
@@ -78,7 +64,6 @@ if (framesToSwitch < 1) framesToSwitch = 1;
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
 
-  // Toggle fullscreen on a click
   canvas.addEventListener('click', () => {
     if (!document.fullscreenElement) {
       canvas.requestFullscreen();
@@ -277,6 +262,19 @@ if (framesToSwitch < 1) framesToSwitch = 1;
     requestAnimationFrame(() => render(1, 1));
   }
 
+  const videoEl = document.getElementById('video');
+  navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: 'user',   // or 'environment'
+      width: 640,
+      height: 480
+    }
+  }).then(stream => {
+    videoEl.srcObject = stream;
+    videoEl.play();
+  }).catch(err => {
+    console.error('Camera error:', err);
+  });
   // ---------------------------------------------------------
   // 6) Render loop
   // ---------------------------------------------------------
@@ -376,61 +374,53 @@ if (framesToSwitch < 1) framesToSwitch = 1;
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
     frameCount++;
+    checkBrightnessInCenter();
     requestAnimationFrame(() => render(columns, rows));
   }
 
-    // ============== CAMERA + WORKER SETUP ================
-  // 1) ADDED: We'll create a Worker that runs `brightnessWorker.js`.
-  const worker = new Worker('brightnessWorker.js'); // separate file
-  worker.onmessage = (e) => {
-    // If the worker detects a flash, reset subImageIdx
-    if (e.data.flashDetected) {
+    // We'll do the brightness check on the main thread
+  // by drawing only the center 16x16 part of the 640x480 video feed
+  // onto a small hidden canvas.
+  function checkBrightnessInCenter() {
+    const camCanvas = document.getElementById('camCanvas');
+    const ctx = camCanvas.getContext('2d');
+    
+    // If video not ready, skip
+    if (videoEl.readyState < 2) return;
+
+    // The center region of a 640x480 is (320,240) as center point.
+    // We'll define a 16x16 region around that center => top-left is (312,232).
+    // We'll draw that region into the entire 16x16 of camCanvas.
+    const sourceX = 320 - 8; // 312
+    const sourceY = 240 - 8; // 232
+    const sourceW = 16;
+    const sourceH = 16;
+
+    ctx.drawImage(
+      videoEl,
+      sourceX, sourceY, sourceW, sourceH,  // source rectangle in video
+      0, 0, 16, 16                         // destination = entire camCanvas
+    );
+
+    // Now read pixel data from the 16x16
+    const frameData = ctx.getImageData(0, 0, 16, 16);
+    const data = frameData.data; // RGBA
+
+    let sum = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      sum += (data[i] + data[i+1] + data[i+2]) / 3; 
+    }
+    const numPixels = data.length / 4;
+    const avgBrightness = sum / numPixels;
+
+    // If brightness is above some threshold => subImageIdx=0
+    const threshold = 200;
+    if (avgBrightness > threshold) {
       subImageIdx = 0;
     }
-  };
-
-  // 2) ADDED: Start the camera once page loads
-  window.addEventListener('load', startCamera);
-
-  async function startCamera() {
-    try {
-      // Request front or rear camera (adjust as needed)
-      const constraints = {
-        video: {
-          facingMode: "user",  // or "environment"
-          frameRate: { ideal: 60, max: 60 },
-          width:  { ideal: 640 },
-          height: { ideal: 480 }
-        }
-      };
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      const videoEl = document.getElementById('video');
-      videoEl.srcObject = stream;
-      await videoEl.play();
-
-      // 3) ADDED: On an interval (e.g. 30–60 times/sec), grab an ImageBitmap & send to worker
-      const intervalMs = 30; // ~33 times/sec. Tweak as needed
-      setInterval(async () => {
-        // If video not ready, skip
-        if (videoEl.readyState < 2) return;
-
-        // Create an ImageBitmap from the <video>
-        // This is more efficient than drawing to a <canvas> on the main thread
-        const bitmap = await createImageBitmap(videoEl);
-
-        // Send it to the worker with a brightness threshold
-        // Transfer the bitmap so we don't copy large buffers
-        worker.postMessage({
-          imageBitmap: bitmap,
-          threshold: 200  // tweak threshold as needed
-        }, [bitmap]);
-
-      }, intervalMs);
-
-    } catch (err) {
-      console.error('Camera error:', err);
-    }
   }
+    // Start the rendering
+    //requestAnimationFrame(() => render(columns, rows));
 })();
 </script>
 
