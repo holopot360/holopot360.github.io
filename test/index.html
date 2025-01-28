@@ -420,8 +420,8 @@
     if (avgBrightness > threshold) {
       const T2 = performance.now();
       const dtMs = T2 - T1; // milliseconds
-      //console.log(-freq * (dtMs / 1000))
-      subImageIdx = Math.round(-freq * (dtMs / 1000)) % 32;
+      //console.log(-freq * (dates / 1000))
+      subImageIdx = Math.round(freq * (dtMs / 1000)) % 32;
     }
   }
     // Start the rendering
