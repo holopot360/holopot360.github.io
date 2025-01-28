@@ -382,6 +382,8 @@
   // by drawing only the center 16x16 part of the 640x480 video feed
   // onto a small hidden canvas.
   function checkBrightnessInCenter() {
+    // Record T1 at the start
+    const T1 = performance.now();
     const camCanvas = document.getElementById('camCanvas');
     const ctx = camCanvas.getContext('2d');
     
@@ -393,8 +395,8 @@
     // We'll draw that region into the entire 16x16 of camCanvas.
     const sourceX = 320 - 8; // 312
     const sourceY = 240 - 8; // 232
-    const sourceW = 16;
-    const sourceH = 16;
+    const sourceW = 32;
+    const sourceH = 32;
 
     ctx.drawImage(
       videoEl,
@@ -416,7 +418,10 @@
     // If brightness is above some threshold => subImageIdx=0
     const threshold = 200;
     if (avgBrightness > threshold) {
-      subImageIdx = 0;
+      const T2 = performance.now();
+      const dtMs = T2 - T1; // milliseconds
+      //console.log(-freq * (dtMs / 1000))
+      subImageIdx = Math.round(-freq * (dtMs / 1000)) % 32;
     }
   }
     // Start the rendering
