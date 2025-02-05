@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=\, initial-scale=1.0" />
+  <!-- Ensure proper scaling on mobile -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Versatile Framework for Low-Cost Parallax Multi-View 360° Displays</title>
 
   <!-- Google Font -->
@@ -11,26 +12,137 @@
     href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" 
     rel="stylesheet" 
   />
-  
+
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Lato', sans-serif; }
-    body { background-color: #ffffff; color: #333; line-height: 1.6; }
-    nav { display: flex; justify-content: space-between; align-items: center; background: #222; padding: 1rem 2rem; }
-    nav a.logo { color: #fff; font-weight: 700; text-decoration: none; font-size: 1.25rem; }
-    nav ul { list-style: none; display: flex; gap: 1rem; }
-    nav ul li a { color: #fff; text-decoration: none; padding: 0.5rem; }
-    nav ul li a:hover { color: #ffd700; }
-    .hero { padding: 4rem 2rem; text-align: center; background-color: #f8f8f8; }
-    .hero h1 { font-size: 2.5rem; margin-bottom: 1rem; }
-    .hero p { font-size: 1.2rem; max-width: 800px; margin: 0.5rem auto 2rem; }
-    .hero video, .hero img { max-width: 100%; margin: 1rem auto; display: block; }
-    .authors { display: flex; justify-content: center; gap: 3vw; text-align: center; flex-wrap: wrap; }
-    .authors span { display: flex; flex-direction: column; align-items: center; min-width: 200px; }
-    .authors small { display: block; font-size: 0.9rem; color: #666; margin-top: 0.2rem; }
-    .videos-container { display: flex; justify-content: center; flex-wrap: wrap; gap: 5vw; }
-    .video-box { text-align: center; }
-    .video-box video { width: 16vw; height: auto; border: 1px solid #ccc; }
-    .caption-row { display: flex; justify-content: center; gap: 40vw; margin-top: 0.5rem; font-weight: bold; font-size: 0.95rem;}
+    /* Global Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Lato', sans-serif;
+    }
+    body {
+      background-color: #ffffff;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    /* Header Navigation */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #222;
+      padding: 1rem 2rem;
+      position: relative;
+    }
+    nav a.logo {
+      color: #fff;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 1.25rem;
+    }
+    .nav-center {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #fff;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 1.25rem;
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 1rem;
+    }
+    nav ul li a {
+      color: #fff;
+      text-decoration: none;
+      padding: 0.5rem;
+    }
+    nav ul li a:hover {
+      color: #ffd700;
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 4rem 2rem;
+      text-align: center;
+      background-color: #f8f8f8;
+      position: relative;
+    }
+    .hero-content {
+      display: inline-block;
+      position: relative;
+    }
+    .hero h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .hero-image {
+      position: absolute;
+      left: -16%;
+      top: -22%;
+      transform: translateY(-50%);
+      height: 120px;
+    }
+    .hero p {
+      font-size: 1.2rem;
+      max-width: 800px;
+      margin: 0.5rem auto 2rem;
+    }
+    .hero video, .hero img {
+      max-width: 100%;
+      margin: 1rem auto;
+      display: block;
+    }
+
+    /* Authors */
+    .authors {
+      display: flex;
+      justify-content: center;
+      gap: 3vw;
+      text-align: center;
+      flex-wrap: wrap;
+    }
+    .authors span {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 200px;
+    }
+    .authors small {
+      display: block;
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 0.2rem;
+    }
+
+    /* Videos Container */
+    .videos-container {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 5vw;
+    }
+    .video-box {
+      text-align: center;
+    }
+    .video-box video {
+      width: 16vw;
+      height: auto;
+      border: 1px solid #ccc;
+    }
+    .caption-row {
+      display: flex;
+      justify-content: center;
+      gap: 40vw;
+      margin-top: 0.5rem;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
     .download-button {
       display: inline-block;
       margin-top: 15px;
@@ -46,55 +158,146 @@
     .download-button:hover {
       background-color: #0056b3;
     }
-    section { padding: 3rem 2rem; max-width: 1000px; margin: 0 auto; }
-    section h2 { margin-bottom: 1rem; font-size: 1.75rem; color: #222; }
-    .section-images { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;}
-    .section-images img { max-width: 400px; width: 100%; border: 1px solid #ccc; }
-    footer { text-align: center; padding: 2rem; background: #222; color: #fff; }
+
+    /* Section Styles */
+    section {
+      padding: 3rem 2rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    section h2 {
+      margin-bottom: 1rem;
+      font-size: 1.75rem;
+      color: #222;
+    }
+    .section-images {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+    }
+    .section-images img {
+      max-width: 400px;
+      width: 100%;
+      border: 1px solid #ccc;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      background: #222;
+      color: #fff;
+    }
+
+    /* Responsive Styles for Mobile */
+    @media (max-width: 768px) {
+      nav {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      nav a.logo,
+      .nav-center,
+      nav ul {
+        position: static;
+        transform: none;
+        width: 100%;
+        text-align: center;
+        margin: 0.5rem 0;
+      }
+      nav ul {
+        justify-content: center;
+      }
+      .hero {
+        padding: 2rem 1rem;
+      }
+      .hero-content {
+        display: block;
+      }
+      .hero-image {
+        position: static;
+        transform: none;
+        display: block;
+        margin: 0 auto 1rem;
+      }
+      .hero h1 {
+        font-size: 1.8rem;
+      }
+      .authors {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+      }
+      .authors span {
+        min-width: auto;
+        width: 100%;
+      }
+      .videos-container {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+      }
+      .video-box video {
+        width: 90%;
+      }
+      .caption-row {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      section {
+        padding: 1.5rem 1rem;
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- Header (Shared on all pages) -->
   <nav>
-    <a class="logo" href="#">HoloPOT 360° Display</a>
+    <a class="logo" href="index.html">Inventor's Kitchen</a>
+    <a class="nav-center" href="#">HoloPOT 360° Display</a>
     <ul>
       <li><a href="#overview">Overview</a></li>
       <li><a href="#method">Method</a></li>
       <li><a href="#conclusion">Conclusion</a></li>
-      <li><a href="#contact">Contact</a></li>
+      <li><a href="about.html">About us</a></li>
+      <li><a href="about.html">Contact</a></li>
     </ul>
   </nav>
-  
-  <div class="hero">
-    <h1>Versatile Framework for Low-Cost Parallax Multi-View 360° Displays</h1>
-    <div class="authors">
-      <span>Petar Pjanic<br/>Independent Researcher<small>petar.pjanic@gmail.com</small></span>
-      <span>Iva Salom<br/>Institute Mihajlo Pupin <br> University of Belgrade <small>iva.salom@pupin.rs</small></span>
-      <span>Igor Salom<br/>Institute of Physics Belgrade <br> University of Belgrade<small>isalom@ipb.ac.rs</small></span>
-      <span>Maja Dukic<br/>Independent Researcher<small>maja.dukic.pjanic@gmail.com</small></span>
-      <span>Miomir Djukic<br/>Independent Researcher<small>dmiomir@gmail.com </small></span>
-    </div>
 
-    <br>
+  <!-- Main Content -->
+  <div class="hero">
+    <div class="hero-content">
+      <img src="IK.png" alt="Inventor's Kitchen Logo" class="hero-image" />
+      <h1>Versatile Framework for Low-Cost Parallax Multi-View 360° Displays</h1>
+    </div>
+    <div class="authors">
+      <span>Petar Pjanic<br />Independent Researcher<small>petar.pjanic@gmail.com</small></span>
+      <span>Iva Salom<br />Institute Mihajlo Pupin<br />University of Belgrade <small>iva.salom@pupin.rs</small></span>
+      <span>Igor Salom<br />Institute of Physics Belgrade<br />University of Belgrade<small>isalom@ipb.ac.rs</small></span>
+      <span>Maja Dukic<br />Independent Researcher<small>maja.dukic.pjanic@gmail.com</small></span>
+      <span>Miomir Djukic<br />Independent Researcher<small>dmiomir@gmail.com</small></span>
+    </div>
+    <br />
     <div class="videos-container">
       <div class="video-box">
         <video autoplay loop muted playsinline>
-          <source src="videoCylinder480.mov" type="video/mp4">
+          <source src="videoCylinder480.mov" type="video/mp4" />
         </video>
       </div>
       <div class="video-box">
         <video autoplay loop muted playsinline>
-          <source src="videoStatue480.mov" type="video/mp4">
+          <source src="videoStatue480.mov" type="video/mp4" />
         </video>
       </div>
       <div style="width: 40px;"></div>
       <div class="video-box">
         <video autoplay loop muted playsinline>
-          <source src="videoFlat480.mov" type="video/mp4">
+          <source src="videoFlat480.mov" type="video/mp4" />
         </video>
       </div>
       <div class="video-box">
         <video autoplay loop muted playsinline>
-          <source src="videoSeeThrough480.mov" type="video/mp4">
+          <source src="videoSeeThrough480.mov" type="video/mp4" />
         </video>
       </div>
     </div>
@@ -102,88 +305,70 @@
       <span>Cylindrical Prototype</span>
       <span>See-Through Prototype</span>
     </div>
-
-    <br>
-    <br>
-
+    <br /><br />
     <a href="https://drive.google.com/file/d/1NOFaX7yBIran8se08huLhCMsSWC8-8Rq/view?usp=sharing" class="download-button" download>Video</a>
-    <br>
+    <br />
     <p>
       Link to the paper and supplementary material will be added after publication.
     </p>
   </div>
-  
+
   <section id="overview">
     <h2>1. Overview</h2>
     <p>
-      In this project, we introduce a new generation of multi-view 360° displays—simple, economical, 
-      and highly capable. Inspired by sci-fi “holographic” concepts yet grounded in practical design, 
-      our solution delivers high-resolution, full-color imagery viewable from any angle—no specialized 
-      eyewear required. By combining a rotating screen (smartphone) with a parallax-based technique, we 
-      achieve continuous, wrap-around visuals. We explore two prototype setups: a cylindrical dual-screen 
-      design that provides enhanced 3D-like depth, and a flat, semi-transparent version that produces 
+      In this project, we introduce a new generation of multi-view 360° displays—simple, economical,
+      and highly capable. Inspired by sci-fi “holographic” concepts yet grounded in practical design,
+      our solution delivers high-resolution, full-color imagery viewable from any angle—no specialized
+      eyewear required. By combining a rotating screen (smartphone) with a parallax-based technique, we
+      achieve continuous, wrap-around visuals. We explore two prototype setups: a cylindrical dual-screen
+      design that provides enhanced 3D-like depth, and a flat, semi-transparent version that produces
       striking “floating” effects.
     </p>
   </section>
-  
+
   <section id="method">
     <h2>2. Method</h2>
     <p>
-      Our display relies on a time-multiplexed parallax strategy, using a rotating screen to unveil 
-      unique image strips from different angles. We synchronize everything with an optical sensor and 
-      wireless signals, continually correcting for drift so the visuals remain stable (Figure 1). By 
-      splitting the content into strips (Figure 2), each viewer perceives a distinct part of the image, 
-      making the display appear truly three-dimensional. This setup, combined with blending and offset 
+      Our display relies on a time-multiplexed parallax strategy, using a rotating screen to unveil
+      unique image strips from different angles. We synchronize everything with an optical sensor and
+      wireless signals, continually correcting for drift so the visuals remain stable (Figure 1). By
+      splitting the content into strips (Figure 2), each viewer perceives a distinct part of the image,
+      making the display appear truly three-dimensional. This setup, combined with blending and offset
       techniques, ensures smooth transitions and crisp imagery no matter where you stand.
     </p>
-    <br>
+    <br />
     <div style="text-align:center; margin-top: 1rem;">
       <img src="sutup.png" alt="Multi-View Process (50%)" style="width: 30%;" />
       <p style="margin-top: 0.5rem;">
-        Figure1: The overall design of the rotating display consists of a display, a cylinder with a slit, 
+        Figure1: The overall design of the rotating display consists of a display, a cylinder with a slit,
         a rotation platform, and a base containing a motor, an optical sensor, and a Raspberry Pi computer.
       </p>
     </div>
-    <br>
-    <br>
-    <br>
-    <br>
-    
-    <!-- First image at 100% width -->
+    <br /><br /><br /><br />
     <div style="text-align:center;">
       <img src="LonceSch3.jpg" alt="Multi-View Process" style="width: 90%;" />
       <p style="margin-top: 0.5rem;">
-        Figure2: In this figure, we present three different stages of cylinder rotation: a), b), and c). 
-        The figure illustrates how, by varying the screen content over time during cylinder rotation, 
+        Figure2: In this figure, we present three different stages of cylinder rotation: a), b), and c).
+        The figure illustrates how, by varying the screen content over time during cylinder rotation,
         we can ensure that each observer perceives distinct content.
       </p>
     </div>
   </section>
-  
+
   <section id="conclusion">
     <h2>5. Conclusion</h2>
     <p>
-      By blending rotating screens, precise parallax cues, and clever synchronization, we’ve shown that 
-      immersive 360° displays can be both high-resolution and budget-friendly. Our two prototypes—a 
-      cylindrical dual-screen and a see-through flat design—exhibit rich colors, stable views from 
-      any angle, and even semi-transparent effects. Future refinements could include adding more 
-      screens to reduce flicker, using lenses for greater brightness, or branching into interactive 
-      and video-based applications. From art exhibits and museum installations to conference presentations 
-      and product showrooms, our multi-view 360° display framework opens up fresh possibilities for 
+      By blending rotating screens, precise parallax cues, and clever synchronization, we’ve shown that
+      immersive 360° displays can be both high-resolution and budget-friendly. Our two prototypes—a
+      cylindrical dual-screen and a see-through flat design—exhibit rich colors, stable views from
+      any angle, and even semi-transparent effects. Future refinements could include adding more
+      screens to reduce flicker, using lenses for greater brightness, or branching into interactive
+      and video-based applications. From art exhibits and museum installations to conference presentations
+      and product showrooms, our multi-view 360° display framework opens up fresh possibilities for
       dynamic, eye-catching experiences accessible to everyone.
     </p>
   </section>
-  <section id="contact">
-    <h2>4. Contact</h2>
-    <p>
-      Please feel free to reach out if you would like to discuss any aspects of this technology.
-    </p>
-    <p>
-      <strong>Email:</strong> petar.pjanic@gmail.com<br/>
-      <a href="https://www.linkedin.com/in/petar-pjanic-a2a515a4/">LinkedIn page</a>
-    </p>
-  </section>
-  
+
   <footer>
     <p>© 2025 Petar Pjanic, Iva Salom, Igor Salom, Maja Dukic, Miomir Djukic</p>
   </footer>
