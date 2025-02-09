@@ -258,6 +258,7 @@
     <ul>
       <li><a href="#overview">Overview</a></li>
       <li><a href="#method">Method</a></li>
+      <li><a href="#tryit">Try it</a></li>
       <li><a href="#conclusion">Conclusion</a></li>
       <li><a href="about.html">About us</a></li>
       <li><a href="about.html">Contact</a></li>
@@ -354,8 +355,35 @@
     </div>
   </section>
 
+  <section id="tryit">
+    <h2>3. How to Try It Out</h2>
+    <p>
+        You can try a simplified version at home with a single screen and no synchronization. 
+        The instructions are explained in the <a href="https://www.youtube.com/watch?v=ric-95ig5oE" target="_blank">Action Lab YouTube video</a>.
+        The idea is to run the code by opening a URL on a smartphone and then rotating the smartphone inside a cylindrical enclosure.
+    </p>
+    <br>
+    <p>
+        Example URL: 
+        <a href="https://holopot360.github.io/?frequency=120&rps=3.75&mode=statue32&numViews=32" target="_blank">
+            https://holopot360.github.io/?frequency=120&rps=3.75&mode=statue32&numViews=32
+        </a>
+    </p>
+    <br>
+    <p>
+        Explanation of parameters:
+        <ul>
+            <li><strong>frequency</strong> - The screen refresh rate of the smartphone.</li>
+            <li><strong>rps</strong> - The rotation speed of the table in rotations per second (use either 3.75 or 7.5).</li>
+            <li><strong>mode</strong> - Choose between <code>viking32</code> or <code>statue32</code> for the provided examples.</li>
+            <li><strong>numViews</strong> - The number of different views to display. This value should be a power of 2 and is limited by <code>frequency / rps</code>.</li>
+        </ul>
+    </p>
+  </section>
+
+
   <section id="conclusion">
-    <h2>5. Conclusion</h2>
+    <h2>4. Conclusion</h2>
     <p>
       By blending rotating screens, precise parallax cues, and clever synchronization, we’ve shown that
       immersive 360° displays can be both high-resolution and budget-friendly. Our two prototypes—a
